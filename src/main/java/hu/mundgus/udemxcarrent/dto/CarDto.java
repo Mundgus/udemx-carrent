@@ -1,6 +1,7 @@
 package hu.mundgus.udemxcarrent.dto;
 
-import jakarta.persistence.Column;
+import java.util.List;
+
 
 public class CarDto {
     private Integer id;
@@ -10,6 +11,7 @@ public class CarDto {
     private Integer fuelConsumption;
     private Boolean isActive;
     private String description;
+    private List<String> images;
 
     public CarDto() {
     }
@@ -69,4 +71,13 @@ public class CarDto {
     public void setDescription(String description) {
         this.description = description;
     }
+
+    public List<String> getImages() {
+        return images;
+    }
+
+    public void setImages(List<String> images) {
+        this.images = images;
+    }
+
 }

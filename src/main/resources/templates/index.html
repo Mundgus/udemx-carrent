@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Car Gallery</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <script>
+        function loadCars(url) {
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    let gallery = document.getElementById("carGallery");
+                    gallery.innerHTML = "";
+                    data.forEach((car, index) => {
+                        let card = `
+                            <div class="col-md-4">
+                                <div class="card mb-4 shadow-sm">
+                                    <div id="carousel${index}" class="carousel slide" data-bs-ride="carousel">
+                                        <div class="carousel-inner">
+                                            ${car.images.map((img, i) => `
+                                                <div class="carousel-item ${i === 0 ? 'active' : ''}">
+                                                    <img src="${img}" class="d-block w-100" alt="Car Image">
+                                                </div>`).join('')}
+                                        </div>
+                                        <button class="carousel-control-prev" type="button" data-bs-target="#carousel${index}" data-bs-slide="prev">
+                                            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                        </button>
+                                        <button class="carousel-control-next" type="button" data-bs-target="#carousel${index}" data-bs-slide="next">
+                                            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                        </button>
+                                    </div>
+                                    <div class="card-body">
+                                        <h5 class="card-title">${car.plateNumber}</h5>
+                                        <p class="card-text">${car.description}</p>
+                                        <ul class="list-group list-group-flush">
+                                            <li class="list-group-item"><strong>Daily Fee:</strong> ${car.dailyFee} USD</li>
+                                            <li class="list-group-item"><strong>Fuel Type:</strong> ${car.fuelType}</li>
+                                            <li class="list-group-item"><strong>Consumption:</strong> ${car.fuelConsumption} L/100km</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>`;
+                        gallery.innerHTML += card;
+                    });
+                });
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            loadCars("/api/cars"); // Load all cars initially
+
+            document.getElementById("searchButton").addEventListener("click", function () {
+                let startDate = document.getElementById("startDate").value;
+                let endDate = document.getElementById("endDate").value;
+                loadCars(`/api/cars?startDate=${startDate}&endDate=${endDate}`);
+            });
+        });
+    </script>
+</head>
+<body>
+<div class="container mt-4">
+    <h2>Car Gallery</h2>
+    <div class="mb-3">
+        <label for="startDate" class="form-label">Start Date:</label>
+        <input type="date" id="startDate" class="form-control">
+    </div>
+    <div class="mb-3">
+        <label for="endDate" class="form-label">End Date:</label>
+        <input type="date" id="endDate" class="form-control">
+    </div>
+    <button id="searchButton" class="btn btn-primary mb-4">Search</button>
+    <div class="row" id="carGallery">
+        <p>Loading cars...</p>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
