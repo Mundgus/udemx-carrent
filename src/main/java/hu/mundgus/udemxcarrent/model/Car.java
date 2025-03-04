@@ -6,6 +6,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Column;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.GenerationType;
 
 import java.util.List;
 
@@ -13,7 +14,7 @@ import java.util.List;
 @Table(name = "cars")
 public class Car {
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
     @Column(
@@ -66,5 +67,78 @@ public class Car {
         this.fuelConsumption = fuelConsumption;
         this.isActive = isActive;
         this.description = description;
+    }
+
+
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
+    public String getPlateNumber() {
+        return plateNumber;
+    }
+
+    public void setPlateNumber(String plateNumber) {
+        this.plateNumber = plateNumber;
+    }
+
+    public Integer getDailyFee() {
+        return dailyFee;
+    }
+
+    public void setDailyFee(Integer dailyFee) {
+        this.dailyFee = dailyFee;
+    }
+
+    public String getFuelType() {
+        return fuelType;
+    }
+
+    public void setFuelType(String fuelType) {
+        this.fuelType = fuelType;
+    }
+
+    public Integer getFuelConsumption() {
+        return fuelConsumption;
+    }
+
+    public void setFuelConsumption(Integer fuelConsumption) {
+        this.fuelConsumption = fuelConsumption;
+    }
+
+    public Boolean getActive() {
+        return isActive;
+    }
+
+    public void setActive(Boolean active) {
+        isActive = active;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public List<CarImage> getCarImages() {
+        return carImages;
+    }
+
+    public void setCarImages(List<CarImage> carImages) {
+        this.carImages = carImages;
+    }
+
+    public List<Booking> getBookings() {
+        return bookings;
+    }
+
+    public void setBookings(List<Booking> bookings) {
+        this.bookings = bookings;
     }
 }
