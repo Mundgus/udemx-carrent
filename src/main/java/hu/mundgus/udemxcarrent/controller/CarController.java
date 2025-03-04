@@ -5,6 +5,8 @@ import hu.mundgus.udemxcarrent.model.Car;
 import hu.mundgus.udemxcarrent.repository.CarRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -26,6 +28,22 @@ public class CarController {
                 .stream()
                 .map(this::toCarDto)
                 .collect(Collectors.toList());
+    }
+
+    @PostMapping("/api/cars")
+    public CarDto createCar(
+            @RequestBody CarDto carDto
+    ) {
+        carRepository.save(new Car(
+                null,
+                carDto.getPlateNumber(),
+                carDto.getDailyFee(),
+                carDto.getFuelType(),
+                carDto.getFuelConsumption(),
+                carDto.getActive(),
+                carDto.getDescription()
+        ));
+        return carDto;
     }
 
     private CarDto toCarDto(Car car) {
