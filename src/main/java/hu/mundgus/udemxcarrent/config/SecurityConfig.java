@@ -11,6 +11,9 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+            .csrf(csrf -> csrf
+                    .ignoringRequestMatchers("/api/**") // Kikapcsoljuk a CSRF-t az API végpontokra
+            )
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/", "/index.html", "/css/**", "/js/**", "/images/**", "/api/**").permitAll() // Engedélyezzük a statikus fájlokat
                 .anyRequest().authenticated()
