@@ -5,13 +5,14 @@ import java.util.List;
 
 public class CarDto {
     private Integer id;
+    private String name;
     private String plateNumber;
     private Integer dailyFee;
     private String fuelType;
-    private Integer fuelConsumption;
+    private Double fuelConsumption;
     private Boolean isActive;
     private String description;
-    private List<String> images;
+    private List<CarImageDto> images;
 
     public CarDto() {
     }
@@ -22,6 +23,14 @@ public class CarDto {
 
     public void setId(Integer id) {
         this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     public String getPlateNumber() {
@@ -48,11 +57,11 @@ public class CarDto {
         this.fuelType = fuelType;
     }
 
-    public Integer getFuelConsumption() {
+    public Double getFuelConsumption() {
         return fuelConsumption;
     }
 
-    public void setFuelConsumption(Integer fuelConsumption) {
+    public void setFuelConsumption(Double fuelConsumption) {
         this.fuelConsumption = fuelConsumption;
     }
 
@@ -72,11 +81,11 @@ public class CarDto {
         this.description = description;
     }
 
-    public List<String> getImages() {
+    public List<CarImageDto> getImages() {
         return images;
     }
 
-    public void setImages(List<String> images) {
+    public void setImages(List<CarImageDto> images) {
         this.images = images;
     }
 
