@@ -1,14 +1,17 @@
 package hu.mundgus.udemxcarrent.controller;
 
 import hu.mundgus.udemxcarrent.dto.CarDto;
+import hu.mundgus.udemxcarrent.dto.CarImageDto;
 import hu.mundgus.udemxcarrent.model.Car;
+import hu.mundgus.udemxcarrent.model.CarImage;
+import hu.mundgus.udemxcarrent.repository.CarImageRepository;
 import hu.mundgus.udemxcarrent.repository.CarRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -30,19 +33,41 @@ public class CarController {
                 .collect(Collectors.toList());
     }
 
+    @GetMapping("/api/cars/{startDate}/{endDate}")
+    public List<CarDto> getAvailableCars(
+            @PathVariable LocalDate startDate,
+            @PathVariable LocalDate endDate
+    ) {
+        return carRepository.findAvailableCars(startDate, endDate)
+                .stream()
+                .map(this::toCarDto)
+                .collect(Collectors.toList());
+    }
+
     @PostMapping("/api/cars")
     public CarDto createCar(
             @RequestBody CarDto carDto
     ) {
-        carRepository.save(new Car(
-                null,
-                carDto.getPlateNumber(),
-                carDto.getDailyFee(),
-                carDto.getFuelType(),
-                carDto.getFuelConsumption(),
-                carDto.getActive(),
-                carDto.getDescription()
-        ));
+        Car car = new Car();
+        car.setName(carDto.getName());
+        car.setPlateNumber(carDto.getPlateNumber());
+        car.setDailyFee(carDto.getDailyFee());
+        car.setFuelType(carDto.getFuelType());
+        car.setFuelConsumption(carDto.getFuelConsumption());
+        car.setActive(true);
+        car.setDescription(carDto.getDescription());
+
+        List<CarImage> images = carDto.getImages().stream().map(imgDto -> {
+            CarImage image = new CarImage();
+            image.setRank(imgDto.getRank());
+            image.setImageUrl(imgDto.getUrl());
+            image.setCar(car); // Set the parent entity
+            return image;
+        }).collect(Collectors.toList());
+
+        car.setCarImages(images);
+
+        carRepository.save(car);
         return carDto;
     }
 
@@ -50,12 +75,23 @@ public class CarController {
         CarDto carDto = new CarDto();
 
         carDto.setId(car.getId());
+        carDto.setName(car.getName());
         carDto.setPlateNumber(car.getPlateNumber());
         carDto.setDailyFee(car.getDailyFee());
         carDto.setFuelType(car.getFuelType());
         carDto.setFuelConsumption(car.getFuelConsumption());
         carDto.setActive(car.getActive());
         carDto.setDescription(car.getDescription());
+
+        List<CarImageDto> carImages = car.getCarImages().stream()
+                        .map(img -> {
+                            CarImageDto carImageDto = new CarImageDto();
+                            carImageDto.setRank(img.getRank());
+                            carImageDto.setUrl(img.getImageUrl());
+                            return carImageDto;
+                        })
+                        .collect(Collectors.toList());
+        carDto.setImages(carImages);
 
         return carDto;
     }

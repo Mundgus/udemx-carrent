@@ -13,17 +13,7 @@ public class SecurityConfig {
         http
             .csrf(csrf -> csrf
                     .ignoringRequestMatchers("/api/**") // Kikapcsoljuk a CSRF-t az API végpontokra
-            )
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/", "/index.html", "/css/**", "/js/**", "/images/**", "/api/**").permitAll() // Engedélyezzük a statikus fájlokat
-                .anyRequest().authenticated()
-            )
-            .formLogin()
-            .defaultSuccessUrl("/", true) // ✅ Ha mégis bejelentkezne, az index.html-re irányítjuk
-            .and()
-            .logout()
-            .logoutSuccessUrl("/") // ✅ Kijelentkezés után vissza az index.html-re
-            .permitAll();
+            );
 
         return http.build();
     }

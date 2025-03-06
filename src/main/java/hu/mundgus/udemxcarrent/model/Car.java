@@ -7,7 +7,9 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Column;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.GenerationType;
+import jakarta.persistence.CascadeType;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -16,6 +18,11 @@ public class Car {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
+
+    @Column(
+            nullable = false
+    )
+    private String name;
 
     @Column(
             nullable = false,
@@ -37,7 +44,7 @@ public class Car {
     @Column(
             nullable = false
     )
-    private Integer fuelConsumption;
+    private Double fuelConsumption;
 
     @Column(
             nullable = false
@@ -47,9 +54,10 @@ public class Car {
     private String description;
 
     @OneToMany(
-            mappedBy = "car"
+            mappedBy = "car",
+            cascade = CascadeType.ALL
     )
-    private List<CarImage> carImages;
+    private List<CarImage> carImages = new ArrayList<>();
 
     @OneToMany(
             mappedBy = "car"
@@ -59,8 +67,9 @@ public class Car {
 
     public Car() {}
 
-    public Car(Integer id, String plateNumber, Integer dailyFee, String fuelType, Integer fuelConsumption, Boolean isActive, String description) {
+    public Car(Integer id, String name, String plateNumber, Integer dailyFee, String fuelType, Double fuelConsumption, Boolean isActive, String description) {
         this.id = id;
+        this.name = name;
         this.plateNumber = plateNumber;
         this.dailyFee = dailyFee;
         this.fuelType = fuelType;
@@ -76,6 +85,14 @@ public class Car {
 
     public void setId(Integer id) {
         this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     public String getPlateNumber() {
@@ -102,11 +119,11 @@ public class Car {
         this.fuelType = fuelType;
     }
 
-    public Integer getFuelConsumption() {
+    public Double getFuelConsumption() {
         return fuelConsumption;
     }
 
-    public void setFuelConsumption(Integer fuelConsumption) {
+    public void setFuelConsumption(Double fuelConsumption) {
         this.fuelConsumption = fuelConsumption;
     }
 
