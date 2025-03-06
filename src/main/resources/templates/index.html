@@ -119,7 +119,7 @@
             document.getElementById("searchButton").addEventListener("click", function () {
                 let startDate = document.getElementById("startDate").value;
                 let endDate = document.getElementById("endDate").value;
-                loadCars(`/api/cars?startDate=${startDate}&endDate=${endDate}`);
+                loadCars(`/api/cars/${startDate}/${endDate}`);
             });
         });
     </script>
