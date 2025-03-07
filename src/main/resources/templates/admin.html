@@ -12,8 +12,9 @@
                     let tableBody = document.getElementById("bookingTableBody");
                     tableBody.innerHTML = "";
                     data.forEach(booking => {
+                    console.log(booking);
                         let row = `<tr>
-                            <td>${booking.user.name}</td>
+                            <td>${booking.user.fullName}</td>
                             <td>${booking.user.email}</td>
                             <td>${booking.user.phone}</td>
                             <td>${booking.user.location}</td>
