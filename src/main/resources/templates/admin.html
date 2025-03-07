@@ -2,9 +2,14 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Admin - Bookings</title>
+    <title>Admin - Bookings & Cars</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
     <script>
+        let isNewCar = false;
+        let carsList = [];
+        let selectedCar = {};
+
         function loadBookings() {
             fetch("/api/bookings")
                 .then(response => response.json())
@@ -13,7 +18,7 @@
                     tableBody.innerHTML = "";
                     data.forEach(booking => {
                         let row = `<tr>
-                            <td>${booking.user.name}</td>
+                            <td>${booking.user.fullName}</td>
                             <td>${booking.user.email}</td>
                             <td>${booking.user.phone}</td>
                             <td>${booking.user.location}</td>
@@ -27,10 +32,234 @@
                 });
         }
 
+        function loadCars() {
+            fetch("/api/cars")
+                .then(response => response.json())
+                .then(data => {
+                    carsList = data;
+                    let gallery = document.getElementById("carGallery");
+                    gallery.innerHTML = "";
+                    data.forEach((car, index) => {
+                        let imagesHtml = car.images.map((img, i) => `
+                            <img src="${img.url}" class="img-thumbnail" alt="Car Image" style="height: 100px; margin-right: 5px;">
+                        `).join('');
+
+                        let card = `
+                            <div class="col-md-4">
+                                <div class="card mb-4 shadow-sm" onclick="editCar(${index})">
+                                    <div class="card-body">
+                                        <h5 class="card-title">${car.name}</h5>
+                                        <p class="card-text">${car.description}</p>
+                                        <ul class="list-group list-group-flush">
+                                            <li class="list-group-item"><strong>Daily Fee:</strong> ${car.dailyFee} USD</li>
+                                            <li class="list-group-item"><strong>Fuel Type:</strong> ${car.fuelType}</li>
+                                            <li class="list-group-item"><strong>Consumption:</strong> ${car.fuelConsumption} L/100km</li>
+                                        </ul>
+                                        <div class="mt-2">${imagesHtml}</div>
+                                    </div>
+                                </div>
+                            </div>`;
+                        gallery.innerHTML += card;
+                    });
+                });
+        }
+
+        function addNewCar() {
+            isNewCar = true;
+            selectedCar = {
+                id: null,
+                active: true,
+                name: "",
+                description: "",
+                dailyFee: "",
+                fuelType: "",
+                fuelConsumption: "",
+                plateNumber: "",
+                images: []
+            };
+
+            openCarForm();
+        }
+
+        function editCar(index) {
+            isNewCar = false;
+            selectedCar = carsList[index];
+            openCarForm();
+        }
+
+        function openCarForm() {
+            if (! selectedCar) {
+                selectedCar = {
+                    id: null,
+                    active: true,
+                    name: "",
+                    description: "",
+                    dailyFee: "",
+                    fuelType: "",
+                    fuelConsumption: "",
+                    plateNumber: "",
+                    images: []
+                };
+            }
+            document.getElementById("carId").value = selectedCar.id;
+            document.getElementById("carIsActive").checked = selectedCar.active;
+            document.getElementById("carName").value = selectedCar.name;
+            document.getElementById("carDescription").value = selectedCar.description;
+            document.getElementById("carDailyFee").value = selectedCar.dailyFee;
+            document.getElementById("carFuelType").value = selectedCar.fuelType;
+            document.getElementById("carFuelConsumption").value = selectedCar.fuelConsumption;
+            document.getElementById("carPlateNumber").value = selectedCar.plateNumber;
+
+            document.getElementById("carFormTitle").innerText = isNewCar ? "New Car" : "Edit Car";
+
+            selectedCar.images.sort((a, b) => a.rank - b.rank);
+
+            let imagesHtml = selectedCar.images.map((img, i) => `
+                <li class="list-group-item d-flex align-items-center" data-index="${i}">
+                    <img src="${img.url}" class="img-thumbnail" alt="Car Image" style="height: 100px; margin-right: 5px; cursor: grab;">
+                    <button class="btn btn-danger btn-sm ms-auto" onclick="deleteImage(${i})">Delete</button>
+                </li>
+            `).join('');
+
+            document.getElementById("carImages").innerHTML = `<ul id="sortableImages" class="list-group">${imagesHtml}</ul>`;
+
+            document.getElementById("carFormModal").style.display = "flex";
+
+            new Sortable(document.getElementById("sortableImages"), {
+                animation: 150,
+                onEnd: function () {
+                    const updatedImages = [];
+                    const listItems = document.querySelectorAll("#sortableImages li");
+
+                    listItems.forEach((item, index) => {
+                        const rank = index + 1;
+                        const imgUrl = item.querySelector("img").src;
+
+                        const img = selectedCar.images.find(img => img.url === imgUrl);
+                        if (img) {
+                            img.rank = rank;
+                            updatedImages.push(img);
+                        }
+                    });
+
+                    selectedCar.images = updatedImages;
+                }
+            });
+        }
+
+        function deleteImage(index) {
+            selectedCar.images.splice(index, 1);
+            editCar(carsList.findIndex(car => car.id === selectedCar.id));
+        }
+
+        function addImage() {
+            let imageUrl = document.getElementById("newImageUrl").value.trim();
+
+            if (!imageUrl) {
+                alert("Please enter a valid image URL.");
+                return;
+            }
+
+            if (!selectedCar || !selectedCar.images) {
+                alert("No car selected!");
+                return;
+            }
+
+            let newImage = {
+                url: imageUrl,
+                rank: selectedCar.images.length + 1
+            };
+
+            selectedCar.images.push(newImage);
+            document.getElementById("newImageUrl").value = "";
+            if (selectedCar.id !== null) {
+                editCar(carsList.findIndex(car => car.id === selectedCar.id));
+            } else {
+                let imagesHtml = selectedCar.images.map((img, i) => `
+                    <li class="list-group-item d-flex align-items-center" data-index="${i}">
+                        <img src="${img.url}" class="img-thumbnail" alt="Car Image" style="height: 100px; margin-right: 5px; cursor: grab;">
+                        <button class="btn btn-danger btn-sm ms-auto" onclick="deleteImage(${i})">Delete</button>
+                    </li>
+                `).join('');
+                document.getElementById("carImages").innerHTML = `<ul id="sortableImages" class="list-group">${imagesHtml}</ul>`;
+            }
+        }
+
+        function closeCarForm() {
+            document.getElementById("carFormModal").style.display = "none";
+        }
+
+        function submitCarUpdate() {
+            const listItems = document.querySelectorAll("#sortableImages li");
+            listItems.forEach((item, index) => {
+                const imgUrl = item.querySelector("img").src;
+                const img = selectedCar.images.find(img => img.url === imgUrl);
+                if (img) {
+                    img.rank = index + 1;
+                }
+            });
+
+            let updatedCar = {
+                id: isNewCar ? null : document.getElementById("carId").value,
+                active: document.getElementById("carIsActive").checked,
+                name: document.getElementById("carName").value,
+                description: document.getElementById("carDescription").value,
+                dailyFee: document.getElementById("carDailyFee").value,
+                fuelType: document.getElementById("carFuelType").value,
+                fuelConsumption: document.getElementById("carFuelConsumption").value,
+                plateNumber: document.getElementById("carPlateNumber").value,
+                images: selectedCar.images
+            };
+
+            let method = isNewCar ? "POST" : "PUT";
+            let url = isNewCar ? "/api/cars" : `/api/cars/${selectedCar.id}`;
+
+            fetch(url, {
+                method: method,
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(updatedCar)
+            }).then(response => {
+                if (response.ok) {
+                    alert(isNewCar ? "Car added successfully!" : "Car updated successfully!");
+                    closeCarForm();
+                    loadCars();
+                } else {
+                    alert("Operation failed!");
+                }
+            });
+        }
+
         document.addEventListener("DOMContentLoaded", function () {
             loadBookings();
+            loadCars();
         });
     </script>
+    <style>
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background: white;
+            padding: 20px;
+            width: 400px;
+        }
+        .scrollable-container {
+            max-height: 70%;
+            overflow-y: auto;
+        }
+        .image-editor-container {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+    </style>
 </head>
 <body>
 <div class="container mt-4">
@@ -50,7 +279,42 @@
         </thead>
         <tbody id="bookingTableBody"></tbody>
     </table>
+
+    <h2>Cars</h2>
+    <button class="btn btn-primary mt-3" onclick="addNewCar()">Add Car</button>
+    <div class="row" id="carGallery"></div>
 </div>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<div id="carFormModal" class="modal-overlay" onclick="closeCarForm()">
+    <div class="modal-content scrollable-container" onclick="event.stopPropagation()">
+        <h3 id="carFormTitle">Edit Car</h3>
+        <form>
+            <input type="hidden" id="carId">
+            <label>Active:</label>
+            <input type="checkbox" id="carIsActive" class="form-check-input">
+            <br />
+            <label>Name:</label>
+            <input type="text" id="carName" class="form-control">
+            <label>Description:</label>
+            <input type="text" id="carDescription" class="form-control">
+            <label>Daily Fee:</label>
+            <input type="number" id="carDailyFee" class="form-control">
+            <label>Fuel Type:</label>
+            <input type="text" id="carFuelType" class="form-control">
+            <label>Fuel Consumption:</label>
+            <input type="number" id="carFuelConsumption" class="form-control">
+            <label>Plate Number:</label>
+            <input type="text" id="carPlateNumber" class="form-control">
+            <div id="carImages" class="mt-2 image-editor-container">
+                <ul id="sortableImages" class="list-group"></ul>
+            </div>
+            <label>Add Image (URL):</label>
+            <input type="text" id="newImageUrl" class="form-control" placeholder="Enter image URL">
+            <button type="button" class="btn btn-success mt-2" onclick="addImage()">Add Image</button>
+            <button type="button" class="btn btn-primary mt-2" onclick="submitCarUpdate()">Submit</button>
+            <button type="button" class="btn btn-secondary mt-2" onclick="closeCarForm()">Close</button>
+        </form>
+    </div>
+</div>
 </body>
 </html>

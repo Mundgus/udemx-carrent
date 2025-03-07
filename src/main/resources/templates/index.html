@@ -63,7 +63,7 @@
                                         </button>
                                     </div>
                                     <div class="card-body" onclick="openBookingForm(${index})">
-                                        <h5 class="card-title">${car.plateNumber}</h5>
+                                        <h5 class="card-title">${car.name}</h5>
                                         <p class="card-text">${car.description}</p>
                                         <ul class="list-group list-group-flush">
                                             <li class="list-group-item"><strong>Daily Fee:</strong> ${car.dailyFee} USD</li>
@@ -80,7 +80,7 @@
 
         function openBookingForm(index) {
             selectedCar = carsList[index];
-            document.getElementById("bookingCarPlate").innerText = selectedCar.plateNumber;
+            document.getElementById("bookingCarName").innerText = selectedCar.name;
             document.getElementById("modalOverlay").style.display = "flex";
             updateTotalPrice();
         }
@@ -159,7 +159,7 @@
 
 <div id="modalOverlay" class="modal-overlay" onclick="closeBookingForm()">
     <div class="modal-content" onclick="event.stopPropagation()">
-        <h3>Book <span id="bookingCarPlate"></span></h3>
+        <h3>Book <span id="bookingCarName"></span></h3>
         <form>
             <label>Name:</label>
             <input type="text" id="bookingName" class="form-control">

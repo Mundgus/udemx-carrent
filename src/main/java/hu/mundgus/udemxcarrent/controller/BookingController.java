@@ -63,6 +63,18 @@ public class BookingController {
         bookingDto.setStartDate(booking.getStartDate());
         bookingDto.setEndDate(booking.getEndDate());
 
+        UserDto userDto = new UserDto();
+        userDto.setFullName(booking.getUser().getFullName());
+        userDto.setEmail(booking.getUser().getEmail());
+        userDto.setPhone(booking.getUser().getPhone());
+        userDto.setLocation(booking.getUser().getLocation());
+        bookingDto.setUser(userDto);
+
+        CarDto carDto = new CarDto();
+        carDto.setName(booking.getCar().getName());
+        carDto.setPlateNumber(booking.getCar().getPlateNumber());
+        bookingDto.setCar(carDto);
+
         return bookingDto;
     }
 
