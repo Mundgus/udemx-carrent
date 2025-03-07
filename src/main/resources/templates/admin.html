@@ -77,10 +77,12 @@
             selectedCar.images.sort((a, b) => a.rank - b.rank);
 
             let imagesHtml = selectedCar.images.map((img, i) => `
-                <li class="list-group-item" data-index="${i}">
+                <li class="list-group-item d-flex align-items-center" data-index="${i}">
                     <img src="${img.url}" class="img-thumbnail" alt="Car Image" style="height: 100px; margin-right: 5px; cursor: grab;">
+                    <button class="btn btn-danger btn-sm ms-auto" onclick="deleteImage(${i})">Delete</button>
                 </li>
             `).join('');
+
             document.getElementById("carImages").innerHTML = `<ul id="sortableImages" class="list-group">${imagesHtml}</ul>`;
 
             document.getElementById("carFormModal").style.display = "flex";
@@ -107,12 +109,25 @@
             });
         }
 
+        function deleteImage(index) {
+            selectedCar.images.splice(index, 1);
+            editCar(carsList.findIndex(car => car.id === selectedCar.id));
+        }
 
         function closeCarForm() {
             document.getElementById("carFormModal").style.display = "none";
         }
 
         function submitCarUpdate() {
+            const listItems = document.querySelectorAll("#sortableImages li");
+            listItems.forEach((item, index) => {
+                const imgUrl = item.querySelector("img").src;
+                const img = selectedCar.images.find(img => img.url === imgUrl);
+                if (img) {
+                    img.rank = index + 1; // Assign rank based on position (1-based index)
+                }
+            });
+
             let updatedCar = {
                 id: document.getElementById("carId").value,
                 active: document.getElementById("carIsActive").checked,

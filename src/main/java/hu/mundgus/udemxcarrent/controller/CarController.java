@@ -19,10 +19,12 @@ import java.util.stream.Collectors;
 public class CarController {
 
     private final CarRepository carRepository;
+    private final CarImageRepository carImageRepository;
 
     @Autowired
-    public CarController(CarRepository carRepository) {
+    public CarController(CarRepository carRepository, CarImageRepository carImageRepository) {
         this.carRepository = carRepository;
+        this.carImageRepository = carImageRepository;
     }
 
     @GetMapping("/api/cars")
@@ -73,6 +75,7 @@ public class CarController {
     }
 
     @PutMapping("/api/cars/{id}")
+    @Transactional
     public ResponseEntity<CarDto> updateCar(
             @PathVariable Long id,
             @RequestBody CarDto carDto
@@ -91,27 +94,29 @@ public class CarController {
         car.setDescription(carDto.getDescription());
         car.setActive(carDto.getActive());
 
-
-        Map<Integer, CarImage> existingImages = car.getCarImages().stream()
-                .collect(Collectors.toMap(CarImage::getRank, img -> img));
+        List<CarImage> existingImages = new ArrayList<>(car.getCarImages());
 
         List<CarImage> updatedImages = new ArrayList<>();
 
         for (CarImageDto imgDto : carDto.getImages()) {
-            CarImage image = existingImages.get(imgDto.getRank());
+            CarImage image = existingImages.stream()
+                    .filter(img -> img.getImageUrl().equals(imgDto.getUrl()))
+                    .findFirst()
+                    .orElse(new CarImage());
 
-            if (image == null) {
-                image = new CarImage();
-                image.setCar(car);
-            }
-
+            image.setCar(car);
             image.setRank(imgDto.getRank());
             image.setImageUrl(imgDto.getUrl());
 
             updatedImages.add(image);
         }
 
-        car.getCarImages().removeIf(img -> !updatedImages.contains(img));
+        List<CarImage> imagesToRemove = existingImages.stream()
+                .filter(img -> updatedImages.stream().noneMatch(newImg -> newImg.getImageUrl().equals(img.getImageUrl())))
+                .collect(Collectors.toList());
+
+        car.getCarImages().removeAll(imagesToRemove);
+        carImageRepository.deleteAll(imagesToRemove);
 
         car.getCarImages().clear();
         car.getCarImages().addAll(updatedImages);
