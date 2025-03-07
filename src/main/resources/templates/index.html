@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>Car Gallery</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css">
     <style>
         .carousel-inner img {
             height: 200px;
@@ -27,13 +28,18 @@
             width: 400px;
         }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/moment/moment.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
     <script>
         let selectedCar = null;
+        let carsList = [];
 
         function loadCars(url) {
             fetch(url)
                 .then(response => response.json())
                 .then(data => {
+                    carsList = data;
                     let gallery = document.getElementById("carGallery");
                     gallery.innerHTML = "";
                     data.forEach((car, index) => {
@@ -56,7 +62,7 @@
                                             <span class="carousel-control-next-icon" aria-hidden="true"></span>
                                         </button>
                                     </div>
-                                    <div class="card-body" onclick="openBookingForm(${index}, ${car.dailyFee}, '${car.plateNumber}')">
+                                    <div class="card-body" onclick="openBookingForm(${index})">
                                         <h5 class="card-title">${car.plateNumber}</h5>
                                         <p class="card-text">${car.description}</p>
                                         <ul class="list-group list-group-flush">
@@ -72,10 +78,11 @@
                 });
         }
 
-        function openBookingForm(index, dailyFee, plateNumber) {
-            selectedCar = { index, dailyFee, plateNumber };
-            document.getElementById("bookingCarPlate").innerText = plateNumber;
+        function openBookingForm(index) {
+            selectedCar = carsList[index];
+            document.getElementById("bookingCarPlate").innerText = selectedCar.plateNumber;
             document.getElementById("modalOverlay").style.display = "flex";
+            updateTotalPrice();
         }
 
         function closeBookingForm() {
@@ -90,13 +97,15 @@
 
         function submitBooking() {
             let bookingData = {
-                name: document.getElementById("bookingName").value,
-                email: document.getElementById("bookingEmail").value,
-                address: document.getElementById("bookingAddress").value,
-                phone: document.getElementById("bookingPhone").value,
-                numberOfDays: document.getElementById("bookingDays").value,
-                totalPrice: document.getElementById("totalPrice").value,
-                plateNumber: selectedCar.plateNumber
+                startDate: document.getElementById("dateRange").value.split(" - ")[0],
+                endDate: document.getElementById("dateRange").value.split(" - ")[1],
+                user: {
+                    fullName: document.getElementById("bookingName").value,
+                    email: document.getElementById("bookingEmail").value,
+                    phone: document.getElementById("bookingPhone").value,
+                    location: document.getElementById("bookingAddress").value
+                },
+                car: selectedCar
             };
 
             fetch("/api/bookings", {
@@ -107,19 +116,31 @@
                 if (response.ok) {
                     alert("Booking successful!");
                     closeBookingForm();
+                    getAvailableCars();
                 } else {
                     alert("Booking failed!");
                 }
             });
         }
 
-        document.addEventListener("DOMContentLoaded", function () {
-            loadCars("/api/cars");
+        function getAvailableCars() {
+            let dates = document.getElementById("dateRange").value.split(" - ");
+            loadCars(`/api/cars/${dates[0]}/${dates[1]}`);
+        }
 
-            document.getElementById("searchButton").addEventListener("click", function () {
-                let startDate = document.getElementById("startDate").value;
-                let endDate = document.getElementById("endDate").value;
-                loadCars(`/api/cars/${startDate}/${endDate}`);
+        $(document).ready(function() {
+            $('#dateRange').daterangepicker({
+                locale: {
+                    format: 'YYYY-MM-DD'
+                }
+            });
+
+            $('#dateRange').on('apply.daterangepicker', function(ev, picker) {
+                getAvailableCars(picker.startDate.format('YYYY-MM-DD'), picker.endDate.format('YYYY-MM-DD'));
+
+                let timeDiff = picker.endDate - picker.startDate;
+                let days = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+                document.getElementById("bookingDays").value = days;
             });
         });
     </script>
@@ -128,18 +149,12 @@
 <div class="container mt-4">
     <h2>Car Gallery</h2>
     <div class="mb-3">
-        <label for="startDate" class="form-label">Start Date:</label>
-        <input type="date" id="startDate" class="form-control">
+        <label for="dateRange" class="form-label">Select Date Range:</label>
+        <input type="text" id="dateRange" class="form-control">
     </div>
-    <div class="mb-3">
-        <label for="endDate" class="form-label">End Date:</label>
-        <input type="date" id="endDate" class="form-control">
-    </div>
-    <button id="searchButton" class="btn btn-primary mb-4">Search</button>
     <div class="row" id="carGallery">
-        <p>Loading cars...</p>
+        <p>Please, select a date range!</p>
     </div>
-    <div class="row" id="carGallery"></div>
 </div>
 
 <div id="modalOverlay" class="modal-overlay" onclick="closeBookingForm()">
@@ -155,7 +170,7 @@
             <label>Phone:</label>
             <input type="text" id="bookingPhone" class="form-control">
             <label>Number of days:</label>
-            <input type="number" id="bookingDays" class="form-control" oninput="updateTotalPrice()">
+            <input type="number" id="bookingDays" class="form-control" readonly>
             <label>Total Price:</label>
             <input type="text" id="totalPrice" class="form-control" readonly>
             <button type="button" class="btn btn-primary mt-2" onclick="submitBooking()">Submit</button>
