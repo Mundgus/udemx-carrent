@@ -200,6 +200,14 @@
             padding: 20px;
             width: 400px;
         }
+        .scrollable-container {
+            max-height: 70%;
+            overflow-y: auto;
+        }
+        .image-editor-container {
+            max-height: 200px;
+            overflow-y: auto;
+        }
     </style>
 </head>
 <body>
@@ -226,7 +234,7 @@
 </div>
 
 <div id="carFormModal" class="modal-overlay" onclick="closeCarForm()">
-    <div class="modal-content" onclick="event.stopPropagation()">
+    <div class="modal-content scrollable-container" onclick="event.stopPropagation()">
         <h3>Edit Car</h3>
         <form>
             <input type="hidden" id="carId">
@@ -245,7 +253,7 @@
             <input type="number" id="carFuelConsumption" class="form-control">
             <label>Plate Number:</label>
             <input type="text" id="carPlateNumber" class="form-control">
-            <div id="carImages" class="mt-2">
+            <div id="carImages" class="mt-2 image-editor-container">
                 <ul id="sortableImages" class="list-group"></ul>
             </div>
             <label>Add Image (URL):</label>
