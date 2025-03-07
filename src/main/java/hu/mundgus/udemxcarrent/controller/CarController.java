@@ -8,11 +8,13 @@ import hu.mundgus.udemxcarrent.repository.CarImageRepository;
 import hu.mundgus.udemxcarrent.repository.CarRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RestController
@@ -69,6 +71,42 @@ public class CarController {
 
         carRepository.save(car);
         return carDto;
+    }
+
+    @PutMapping("/api/cars/{id}")
+    public ResponseEntity<CarDto> updateCar(
+            @PathVariable Long id,
+            @RequestBody CarDto carDto
+    ) {
+        Optional<Car> optionalCar = carRepository.findById(id);
+        if (optionalCar.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        Car car = optionalCar.get();
+        car.setName(carDto.getName());
+        car.setPlateNumber(carDto.getPlateNumber());
+        car.setDailyFee(carDto.getDailyFee());
+        car.setFuelType(carDto.getFuelType());
+        car.setFuelConsumption(carDto.getFuelConsumption());
+        car.setDescription(carDto.getDescription());
+        car.setActive(carDto.getActive());
+
+
+        // TODO Frissítsük a képeket
+//        List<CarImage> images = carDto.getImages().stream().map(imgDto -> {
+//            CarImage image = new CarImage();
+//            image.setRank(imgDto.getRank());
+//            image.setImageUrl(imgDto.getUrl());
+//            image.setCar(car);
+//            return image;
+//        }).collect(Collectors.toList());
+//
+//        car.getCarImages().clear();
+//        car.getCarImages().addAll(images);
+
+        carRepository.save(car);
+        return ResponseEntity.ok(carDto);
     }
 
     private CarDto toCarDto(Car car) {
