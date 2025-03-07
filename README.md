@@ -83,6 +83,10 @@ To book them, just click **on the card but not on the image** and fill the form!
 - Backend doesn't check if the car still available if you try to book
 
 ## Future TODO
+- Create services so business logic will be in separate class
+- Exception handling
+- Response entity return type in controllers
+- Mappers for the model-entity coneversion
 - Write tests
 - Containerisation
 - Security check (XSS, authenticate /admin)
