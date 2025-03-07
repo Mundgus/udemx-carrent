@@ -30,10 +30,22 @@
     <script>
         let selectedCar = null;
 
+        function calculateDays() {
+            let startDate = new Date(document.getElementById("startDate").value);
+            let endDate = new Date(document.getElementById("endDate").value);
+            if (startDate && endDate && endDate > startDate) {
+                let timeDiff = endDate - startDate;
+                let days = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+                document.getElementById("bookingDays").value = days;
+                updateTotalPrice();
+            }
+        }
+
         function loadCars(url) {
             fetch(url)
                 .then(response => response.json())
                 .then(data => {
+                    carsList = data;
                     let gallery = document.getElementById("carGallery");
                     gallery.innerHTML = "";
                     data.forEach((car, index) => {
@@ -56,7 +68,7 @@
                                             <span class="carousel-control-next-icon" aria-hidden="true"></span>
                                         </button>
                                     </div>
-                                    <div class="card-body" onclick="openBookingForm(${index}, ${car.dailyFee}, '${car.plateNumber}')">
+                                    <div class="card-body" onclick="openBookingForm(${index}, ${car.dailyFee})">
                                         <h5 class="card-title">${car.plateNumber}</h5>
                                         <p class="card-text">${car.description}</p>
                                         <ul class="list-group list-group-flush">
@@ -72,10 +84,11 @@
                 });
         }
 
-        function openBookingForm(index, dailyFee, plateNumber) {
-            selectedCar = { index, dailyFee, plateNumber };
-            document.getElementById("bookingCarPlate").innerText = plateNumber;
+        function openBookingForm(index) {
+            selectedCar = carsList[index];
+            document.getElementById("bookingCarPlate").innerText = selectedCar.plateNumber;
             document.getElementById("modalOverlay").style.display = "flex";
+            calculateDays();
         }
 
         function closeBookingForm() {
@@ -90,13 +103,15 @@
 
         function submitBooking() {
             let bookingData = {
-                name: document.getElementById("bookingName").value,
-                email: document.getElementById("bookingEmail").value,
-                address: document.getElementById("bookingAddress").value,
-                phone: document.getElementById("bookingPhone").value,
-                numberOfDays: document.getElementById("bookingDays").value,
-                totalPrice: document.getElementById("totalPrice").value,
-                plateNumber: selectedCar.plateNumber
+                startDate: document.getElementById("startDate").value,
+                endDate: document.getElementById("endDate").value,
+                user: {
+                    fullName: document.getElementById("bookingName").value,
+                    email: document.getElementById("bookingEmail").value,
+                    phone: document.getElementById("bookingPhone").value,
+                    location: document.getElementById("bookingAddress").value
+                },
+                car: selectedCar
             };
 
             fetch("/api/bookings", {
@@ -107,20 +122,23 @@
                 if (response.ok) {
                     alert("Booking successful!");
                     closeBookingForm();
+                    getAvailableCars();
                 } else {
                     alert("Booking failed!");
                 }
             });
         }
 
+        function getAvailableCars() {
+            let startDate = document.getElementById("startDate").value;
+            let endDate = document.getElementById("endDate").value;
+            loadCars(`/api/cars/${startDate}/${endDate}`);
+        }
+
         document.addEventListener("DOMContentLoaded", function () {
             loadCars("/api/cars");
 
-            document.getElementById("searchButton").addEventListener("click", function () {
-                let startDate = document.getElementById("startDate").value;
-                let endDate = document.getElementById("endDate").value;
-                loadCars(`/api/cars/${startDate}/${endDate}`);
-            });
+            document.getElementById("searchButton").addEventListener("click", getAvailableCars);
         });
     </script>
 </head>
@@ -139,7 +157,6 @@
     <div class="row" id="carGallery">
         <p>Loading cars...</p>
     </div>
-    <div class="row" id="carGallery"></div>
 </div>
 
 <div id="modalOverlay" class="modal-overlay" onclick="closeBookingForm()">
@@ -155,7 +172,7 @@
             <label>Phone:</label>
             <input type="text" id="bookingPhone" class="form-control">
             <label>Number of days:</label>
-            <input type="number" id="bookingDays" class="form-control" oninput="updateTotalPrice()">
+            <input type="number" id="bookingDays" class="form-control" readonly>
             <label>Total Price:</label>
             <input type="text" id="totalPrice" class="form-control" readonly>
             <button type="button" class="btn btn-primary mt-2" onclick="submitBooking()">Submit</button>
