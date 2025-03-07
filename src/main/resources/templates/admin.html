@@ -6,8 +6,9 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
     <script>
+        let isNewCar = false;
         let carsList = [];
-        let selectedCar = null;
+        let selectedCar = {};
 
         function loadBookings() {
             fetch("/api/bookings")
@@ -63,8 +64,43 @@
                 });
         }
 
+        function addNewCar() {
+            isNewCar = true;
+            selectedCar = {
+                id: null,
+                active: true,
+                name: "",
+                description: "",
+                dailyFee: "",
+                fuelType: "",
+                fuelConsumption: "",
+                plateNumber: "",
+                images: []
+            };
+
+            openCarForm();
+        }
+
         function editCar(index) {
+            isNewCar = false;
             selectedCar = carsList[index];
+            openCarForm();
+        }
+
+        function openCarForm() {
+            if (! selectedCar) {
+                selectedCar = {
+                    id: null,
+                    active: true,
+                    name: "",
+                    description: "",
+                    dailyFee: "",
+                    fuelType: "",
+                    fuelConsumption: "",
+                    plateNumber: "",
+                    images: []
+                };
+            }
             document.getElementById("carId").value = selectedCar.id;
             document.getElementById("carIsActive").checked = selectedCar.active;
             document.getElementById("carName").value = selectedCar.name;
@@ -73,6 +109,8 @@
             document.getElementById("carFuelType").value = selectedCar.fuelType;
             document.getElementById("carFuelConsumption").value = selectedCar.fuelConsumption;
             document.getElementById("carPlateNumber").value = selectedCar.plateNumber;
+
+            document.getElementById("carFormTitle").innerText = isNewCar ? "New Car" : "Edit Car";
 
             selectedCar.images.sort((a, b) => a.rank - b.rank);
 
@@ -129,12 +167,22 @@
 
             let newImage = {
                 url: imageUrl,
-                rank: selectedCar.images.length + 1 // Új kép a lista végére kerül
+                rank: selectedCar.images.length + 1
             };
 
             selectedCar.images.push(newImage);
-            document.getElementById("newImageUrl").value = ""; // Input mező törlése
-            editCar(carsList.findIndex(car => car.id === selectedCar.id)); // UI frissítés
+            document.getElementById("newImageUrl").value = "";
+            if (selectedCar.id !== null) {
+                editCar(carsList.findIndex(car => car.id === selectedCar.id));
+            } else {
+                let imagesHtml = selectedCar.images.map((img, i) => `
+                    <li class="list-group-item d-flex align-items-center" data-index="${i}">
+                        <img src="${img.url}" class="img-thumbnail" alt="Car Image" style="height: 100px; margin-right: 5px; cursor: grab;">
+                        <button class="btn btn-danger btn-sm ms-auto" onclick="deleteImage(${i})">Delete</button>
+                    </li>
+                `).join('');
+                document.getElementById("carImages").innerHTML = `<ul id="sortableImages" class="list-group">${imagesHtml}</ul>`;
+            }
         }
 
         function closeCarForm() {
@@ -147,12 +195,12 @@
                 const imgUrl = item.querySelector("img").src;
                 const img = selectedCar.images.find(img => img.url === imgUrl);
                 if (img) {
-                    img.rank = index + 1; // Assign rank based on position (1-based index)
+                    img.rank = index + 1;
                 }
             });
 
             let updatedCar = {
-                id: document.getElementById("carId").value,
+                id: isNewCar ? null : document.getElementById("carId").value,
                 active: document.getElementById("carIsActive").checked,
                 name: document.getElementById("carName").value,
                 description: document.getElementById("carDescription").value,
@@ -163,17 +211,20 @@
                 images: selectedCar.images
             };
 
-            fetch(`/api/cars/${updatedCar.id}`, {
-                method: "PUT",
+            let method = isNewCar ? "POST" : "PUT";
+            let url = isNewCar ? "/api/cars" : `/api/cars/${selectedCar.id}`;
+
+            fetch(url, {
+                method: method,
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(updatedCar)
             }).then(response => {
                 if (response.ok) {
-                    alert("Car updated successfully!");
+                    alert(isNewCar ? "Car added successfully!" : "Car updated successfully!");
                     closeCarForm();
                     loadCars();
                 } else {
-                    alert("Update failed!");
+                    alert("Operation failed!");
                 }
             });
         }
@@ -230,12 +281,13 @@
     </table>
 
     <h2>Cars</h2>
+    <button class="btn btn-primary mt-3" onclick="addNewCar()">Add Car</button>
     <div class="row" id="carGallery"></div>
 </div>
 
 <div id="carFormModal" class="modal-overlay" onclick="closeCarForm()">
     <div class="modal-content scrollable-container" onclick="event.stopPropagation()">
-        <h3>Edit Car</h3>
+        <h3 id="carFormTitle">Edit Car</h3>
         <form>
             <input type="hidden" id="carId">
             <label>Active:</label>
