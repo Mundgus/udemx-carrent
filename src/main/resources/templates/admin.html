@@ -114,6 +114,29 @@
             editCar(carsList.findIndex(car => car.id === selectedCar.id));
         }
 
+        function addImage() {
+            let imageUrl = document.getElementById("newImageUrl").value.trim();
+
+            if (!imageUrl) {
+                alert("Please enter a valid image URL.");
+                return;
+            }
+
+            if (!selectedCar || !selectedCar.images) {
+                alert("No car selected!");
+                return;
+            }
+
+            let newImage = {
+                url: imageUrl,
+                rank: selectedCar.images.length + 1 // Új kép a lista végére kerül
+            };
+
+            selectedCar.images.push(newImage);
+            document.getElementById("newImageUrl").value = ""; // Input mező törlése
+            editCar(carsList.findIndex(car => car.id === selectedCar.id)); // UI frissítés
+        }
+
         function closeCarForm() {
             document.getElementById("carFormModal").style.display = "none";
         }
@@ -225,6 +248,9 @@
             <div id="carImages" class="mt-2">
                 <ul id="sortableImages" class="list-group"></ul>
             </div>
+            <label>Add Image (URL):</label>
+            <input type="text" id="newImageUrl" class="form-control" placeholder="Enter image URL">
+            <button type="button" class="btn btn-success mt-2" onclick="addImage()">Add Image</button>
             <button type="button" class="btn btn-primary mt-2" onclick="submitCarUpdate()">Submit</button>
             <button type="button" class="btn btn-secondary mt-2" onclick="closeCarForm()">Close</button>
         </form>
