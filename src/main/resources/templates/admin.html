@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>Admin - Bookings & Cars</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
     <script>
         let carsList = [];
         let selectedCar = null;
@@ -72,11 +73,40 @@
             document.getElementById("carFuelType").value = selectedCar.fuelType;
             document.getElementById("carFuelConsumption").value = selectedCar.fuelConsumption;
             document.getElementById("carPlateNumber").value = selectedCar.plateNumber;
-            document.getElementById("carImages").innerHTML = selectedCar.images.map(img => `
-                <img src="${img.url}" class="img-thumbnail" alt="Car Image" style="height: 100px; margin-right: 5px;">
+
+            selectedCar.images.sort((a, b) => a.rank - b.rank);
+
+            let imagesHtml = selectedCar.images.map((img, i) => `
+                <li class="list-group-item" data-index="${i}">
+                    <img src="${img.url}" class="img-thumbnail" alt="Car Image" style="height: 100px; margin-right: 5px; cursor: grab;">
+                </li>
             `).join('');
+            document.getElementById("carImages").innerHTML = `<ul id="sortableImages" class="list-group">${imagesHtml}</ul>`;
+
             document.getElementById("carFormModal").style.display = "flex";
+
+            new Sortable(document.getElementById("sortableImages"), {
+                animation: 150,
+                onEnd: function () {
+                    const updatedImages = [];
+                    const listItems = document.querySelectorAll("#sortableImages li");
+
+                    listItems.forEach((item, index) => {
+                        const rank = index + 1;
+                        const imgUrl = item.querySelector("img").src;
+
+                        const img = selectedCar.images.find(img => img.url === imgUrl);
+                        if (img) {
+                            img.rank = rank;
+                            updatedImages.push(img);
+                        }
+                    });
+
+                    selectedCar.images = updatedImages;
+                }
+            });
         }
+
 
         function closeCarForm() {
             document.getElementById("carFormModal").style.display = "none";
@@ -177,7 +207,9 @@
             <input type="number" id="carFuelConsumption" class="form-control">
             <label>Plate Number:</label>
             <input type="text" id="carPlateNumber" class="form-control">
-            <div id="carImages" class="mt-2"></div>
+            <div id="carImages" class="mt-2">
+                <ul id="sortableImages" class="list-group"></ul>
+            </div>
             <button type="button" class="btn btn-primary mt-2" onclick="submitCarUpdate()">Submit</button>
             <button type="button" class="btn btn-secondary mt-2" onclick="closeCarForm()">Close</button>
         </form>

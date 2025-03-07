@@ -12,9 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @RestController
@@ -61,9 +59,10 @@ public class CarController {
 
         List<CarImage> images = carDto.getImages().stream().map(imgDto -> {
             CarImage image = new CarImage();
+            image.setId(imgDto.getId());
             image.setRank(imgDto.getRank());
             image.setImageUrl(imgDto.getUrl());
-            image.setCar(car); // Set the parent entity
+            image.setCar(car);
             return image;
         }).collect(Collectors.toList());
 
@@ -93,17 +92,29 @@ public class CarController {
         car.setActive(carDto.getActive());
 
 
-        // TODO Frissítsük a képeket
-//        List<CarImage> images = carDto.getImages().stream().map(imgDto -> {
-//            CarImage image = new CarImage();
-//            image.setRank(imgDto.getRank());
-//            image.setImageUrl(imgDto.getUrl());
-//            image.setCar(car);
-//            return image;
-//        }).collect(Collectors.toList());
-//
-//        car.getCarImages().clear();
-//        car.getCarImages().addAll(images);
+        Map<Integer, CarImage> existingImages = car.getCarImages().stream()
+                .collect(Collectors.toMap(CarImage::getRank, img -> img));
+
+        List<CarImage> updatedImages = new ArrayList<>();
+
+        for (CarImageDto imgDto : carDto.getImages()) {
+            CarImage image = existingImages.get(imgDto.getRank());
+
+            if (image == null) {
+                image = new CarImage();
+                image.setCar(car);
+            }
+
+            image.setRank(imgDto.getRank());
+            image.setImageUrl(imgDto.getUrl());
+
+            updatedImages.add(image);
+        }
+
+        car.getCarImages().removeIf(img -> !updatedImages.contains(img));
+
+        car.getCarImages().clear();
+        car.getCarImages().addAll(updatedImages);
 
         carRepository.save(car);
         return ResponseEntity.ok(carDto);
@@ -124,6 +135,7 @@ public class CarController {
         List<CarImageDto> carImages = car.getCarImages().stream()
                         .map(img -> {
                             CarImageDto carImageDto = new CarImageDto();
+                            carImageDto.setId(img.getId());
                             carImageDto.setRank(img.getRank());
                             carImageDto.setUrl(img.getImageUrl());
                             return carImageDto;
