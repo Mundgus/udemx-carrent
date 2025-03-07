@@ -133,13 +133,15 @@
                 locale: {
                     format: 'YYYY-MM-DD'
                 }
-            }, function(start, end) {
-                getAvailableCars();
-                let timeDiff = end - start;
+            });
+
+            $('#dateRange').on('apply.daterangepicker', function(ev, picker) {
+                getAvailableCars(picker.startDate.format('YYYY-MM-DD'), picker.endDate.format('YYYY-MM-DD'));
+
+                let timeDiff = picker.endDate - picker.startDate;
                 let days = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
                 document.getElementById("bookingDays").value = days;
             });
-            loadCars("/api/cars");
         });
     </script>
 </head>
@@ -151,7 +153,7 @@
         <input type="text" id="dateRange" class="form-control">
     </div>
     <div class="row" id="carGallery">
-        <p>Loading cars...</p>
+        <p>Please, select a date range!</p>
     </div>
 </div>
 

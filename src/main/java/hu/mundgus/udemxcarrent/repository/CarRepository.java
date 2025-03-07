@@ -14,7 +14,6 @@ public interface CarRepository extends JpaRepository<Car, Long> {
 
     @Query("SELECT c FROM Car c WHERE c.isActive = true AND c.id NOT IN (" +
             "SELECT b.car.id FROM Booking b " +
-            "WHERE (b.startDate BETWEEN :startDate AND :endDate) " +
-            "OR (b.endDate BETWEEN :startDate AND :endDate))")
+            "WHERE (b.startDate <= :endDate AND b.endDate >= :startDate))")
     List<Car> findAvailableCars(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
 }
